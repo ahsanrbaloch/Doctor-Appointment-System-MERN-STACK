@@ -2,10 +2,41 @@ import React from "react";
 import Layout from "../components/Layout";
 import Form from "antd/es/form/Form";
 import { Col, Input, Row, TimePicker } from "antd";
+import { message } from "antd";
+import { useDispatch } from "react-redux";
+import { useNavigate } from "react-router-dom";
+import { showLoading, hideLoading } from "../redux/features/alertSlice";
+import axios from "axios";
 const ApplyDoctor = () => {
+    const dispatch = useDispatch();
+    const navigate = useNavigate();
     //handle form
-    const handleFinish = (values) => {
-        console.log(values);
+    const handleFinish = async (values) => {
+        try {
+            dispatch(showLoading());
+            const res = await axios.post(
+                "/api/v1/user/apply-doctor",
+                { ...values },
+                {
+                    headers: {
+                        Authorization: `Bearer ${localStorage.getItem(
+                            "token"
+                        )}`,
+                    },
+                }
+            );
+            dispatch(hideLoading());
+            if (res.data.success) {
+                message.success(res.data.message);
+                navigate("/");
+            } else {
+                message.error(res.data.message);
+            }
+        } catch (error) {
+            dispatch(hideLoading());
+            console.log(error);
+            message.error("Something went wrong");
+        }
     };
     return (
         <Layout>
@@ -85,17 +116,23 @@ const ApplyDoctor = () => {
                             <Input type="text" placeholder="your fees" />
                         </Form.Item>
                     </Col>
+                    <Col xs={24} md={24} lg={8}>
+                        <Form.Item label="Timings" name="timings" required>
+                            <TimePicker.RangePicker format="HH:mm" />
+                        </Form.Item>
+                    </Col>
+                    <Col xs={24} md={24} lg={8}></Col>
+                    <Col xs={24} md={24} lg={8}>
+                        <button
+                            className="btn btn-primary form-btn"
+                            type="Submit"
+                        >
+                            Submit
+                        </button>
+                    </Col>
 
                     {/* Second Row */}
-                    <Form.Item label="Timings" name="timings" required>
-                        <TimePicker.RangePicker />
-                    </Form.Item>
                 </Row>
-                <div className="d-flex justify-content-end">
-                    <button className="btn btn-primary" type="Submit">
-                        Submit
-                    </button>
-                </div>
             </Form>
         </Layout>
     );
